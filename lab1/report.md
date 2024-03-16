@@ -29,9 +29,43 @@
 > 1. Generate an AES-128 key with the cipher mode of CBC through openssl.
 > 2. encrypt a message m = “introduction to cybersecurity 2024” and decrypt it back using the above AES-128-cbc secrets.
 > 3. Generate a public and private key pair.
-> 4. generate a sha256 hash of the message m, and generate a signature by encrypting the hash with your private key.
+> 4. Generate a sha256 hash of the message m, and generate a signature by encrypting the hash with your private key.
 > 5. Verify the digital signature, with your public key.
 > 6. Take **screenshots** of step 1-5, and embed them in the submission pdf.
+
+Step 1 & 2:
+
+```powershell
+$KEY = openssl rand -hex 16 # Generate key
+$KEY
+$IV = openssl rand -hex 16 # Generate iv
+$IV
+echo -n "introduction to cybersecurity 2024" > message.txt
+openssl enc -aes-128-cbc -in message.txt -out message.enc -K $KEY -iv $IV # Encode message
+cat message.enc
+openssl enc -aes-128-cbc -d -in message.enc -out decrypted_message.txt -K $KEY -iv $IV # Decode message
+cat decrypted_message.txt
+```
+
+![](./attachments/1.png)
+
+Step 3~5:
+
+```powershell
+openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048 # Generate private key
+cat private_key.pem
+openssl rsa -pubout -in private_key.pem -out public_key.pem # Generate public key
+cat public_key.pem
+openssl dgst -sha256 -out message.sha256 message.txt # Calculate sha256 hash
+cat message.sha256
+openssl dgst -sha256 -sign private_key.pem -out message.sig message.txt # Digital signature
+cat message.sig
+openssl dgst -sha256 -verify public_key.pem -signature message.sig message.txt # Verify
+```
+
+![](./attachments/2.png)
+
+![](./attachments/3.png)
 
 ## 6 (20 points)
 
@@ -42,7 +76,8 @@
 > 3. Troncoso, Carmela, et al. "Decentralized privacy-preserving proximity tracing." arXiv preprint arXiv:2005.12273 (2020).
 > 4. Albrecht, Martin R., et al. "Practically-exploitable cryptographic vulnerabilities in matrix." 2023 IEEE Symposium on Security and Privacy (SP). IEEE, 2023.
 >
-> Your review should contain the following elements
-> A good summary of the paper with one or two paragraphs.
-> Key contributions of the paper in terms of identifying new questions, proposing new methodologies, and distilling insightful understandings, etc.
-> Limitations and future works
+> Your review should contain the following elements:
+> 
+> 1. A good summary of the paper with one or two paragraphs.
+> 2. Key contributions of the paper in terms of identifying new questions, proposing new methodologies, and distilling insightful understandings, etc.
+> 3. Limitations and future works
