@@ -18,9 +18,39 @@
 
 > Identify the CAs (including the intermediate and root ones) that have issued the TLS certificate for [https://ustc.edu.cn/](https://ustc.edu.cn/). Then, identify the certificate expiration date. Besides, export the TLS certificate into a PEM file (e.g., through openssl), and calculate its md5 hash and SHA256 hash.
 
+![](./attachments/4.png)
+
+![](./attachments/5.png)
+
+- Root CA: `USERTrust RSA Certification Authority`
+- Intermediate CA: `ZeroSSL RSA Domain Secure Site CA`
+- Expiration date: `2024/6/9 GMT+8 07:59:59`
+- Convert to PEM: `openssl x509 -in ustc.edu.cn.crt -outform PEM -out ustc.edu.cn.pem`
+- PEM hash
+    - MD5: `0757700FF70DF9251F67F77526456313`
+    - SHA256: `70A8F9021F2131D82B91D9629CFCC3EE71C7C704E54E0E9D37F011630BECD4CE`
+
 ### b) (10 points)
 
 > Similarly, redo the above experiments for [www.12306.cn](https://www.12306.cn/) and [www.bing.com](https://www.bing.com/).
+
+#### www.12306.cn
+
+- Root CA: `CFCA EV ROOT`
+- Intermediate CA: `CFCA OV OCA`
+- Expiration date: `2024/10/24 GMT+8 09:49:30`
+- PEM hash
+    - MD5: `3599B79C6BA2BDE763C3AE93B4FAE97B`
+    - SHA256: `E68D6AE5EC90966C1CB75E2F458FA3F35A7AF49BFB0BBBAA958D124265D58122`
+
+#### www.bing.com
+
+- Root CA: `DigiCert Global Root G2`
+- Intermediate CA: `Microsoft Azure TLS Issuing CA 02`
+- Expiration date: `2024/6/28 GMT+8 07:59:59`
+- PEM hash
+    - MD5: `B901CAE6F581C43CDA2BD83613273D03`
+    - SHA256: `0C45B72C0F3D031ED5D686E189D734C21A2F8FC51B2AD75203F7D54878DF420E`
 
 ## 5 (30 points)
 
