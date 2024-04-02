@@ -25,25 +25,38 @@
 
 >  If a process with user id x forks to create another process, what user id does the new process have? (Hint: it's the same answer for euid, ruid, and suid.)
 
+$x$
+
 ### b)
 
 > If a process with euid y makes a setuid system call, what possible euids can the process run with after the call, in each of the following situations:
-> - Before: euid = y > 0, saved user id suid=m and real user id ruid = m. After:?
+> - Before: euid = y > 0, saved user id suid = m and real user id ruid = m. After:?
 > - Before: y=0 After:?
+
+- $m$
+- Any valid user ID
 
 ### c)
 
 > Each Android application runs in a separate process using a separate user id. From a security standpoint, what is the advantage of assigning separate uids instead of using the same uid for all? Explain.
 
+In order to ensure that an app cannot access another app's data.
+
 ### d)
 
 > The Android zygote process that creates new processes runs as root. After forking to create a new process, setuid is normally called. Explain what uid the new process has initially and why it is important to call setuid? What security purpose does this serve?
+
+- The new process initially has **uid=0**, since it is forked from zygote whose uid=0.
+- It is important to call `setuid`, because by changing the uid, we can **limit the new process's privilege** (Principle of least privilege).
 
 ### e)
 
 > When a Unix user wishes to change her password, she uses the passwd program. The Unix password file is usually publicly readable but (for obvious reasons) can only be written by processes with root privileges.
 > - How should the setuid bit be set on this passwd program? Explain how this lets a user change her password.
 > - Why does this make it important to write the passwd program source code carefully?
+
+- It should be set to `1`. Since the executable's owner is `root`, by setting the `setuid` bit to `1`, a user launched `passwd` process would have root privilege to modify `/etc/passwd`. If the `setuid` bit is not `1`, the user launched `passwd` process would not have the permission to modify password.
+- If there's a bug, a common user might be able to change an arbitrary user's password, or read/write any given file, since the created `passwd` process has root privilege.
 
 ## 4
 
@@ -58,15 +71,25 @@
 
 ### a)
 
-> Suppose this code is running as a setuid root program. Give an example of how this code can lead to unexpected behavior that could cause a security problem. Hint: try using symbolic links.
+>     Suppose this code is running as a setuid root program. Give an example of how this code can lead to unexpected behavior that could cause a security problem. Hint: try using symbolic links.
+
+- If, when the program is sleeping, we execute: `ln -s /etc/passwd ./file.dat`
+- Then, `/etc/passwd` might be overwritten
 
 ### b)
 
 > Suppose the sleep(10) is removed from the code above. Could the problem you identified in part (a) still occur? Please explain.
 
+- It might still occur, but under a much more constrained timing scenario.
+- If the scheduler chooses to pause the program exactly after it has executed `if (!stat("./file.dat", buf)) return;`, and chooses to execute the `ln` command we've mentioned, then the attack will succeed.
+
 ### c)
 
 > How would you fix the code to prevent the problem from part (a)?
+
+- Using `setuid` to drop root privilege, if it is not required.
+- Using atomic file operations, e.g. `int fd = open("./file.dat", O_WRONLY | O_CREAT | O_EXCL, 0666);`
+- Explicitly check if the file is a symbolic link.
 
 ## 5
 
@@ -97,21 +120,58 @@
 > - take the first half of the hex string as the user name, create a user with the home directory,
 > - and set up its password as the last half of the hex string (hints: commands useradd and passwd)
 
+```shell
+$ openssl rand -hex 16
+d6f1a07c7502d98cbe9283a9afd5e0c3
+$ sudo useradd -m -d /home/d6f1a07c7502d98c d6f1a07c7502d98c
+$ sudo passwd d6f1a07c7502d98c
+```
+
 ### b)
 
 > Look into the passwd file (/etc/passwd), and locate the entry of your newly created user, Look into the file (/etc/shadow) storing the salted password hash, identify the entry for your newly created user X
+
+```shell
+$ cat /etc/passwd | grep d6f1a07c7502d98c
+d6f1a07c7502d98c:x:1001:1001::/home/d6f1a07c7502d98c:/bin/sh
+$ sudo cat /etc/shadow | grep d6f1a07c7502d98c
+d6f1a07c7502d98c:$y$j9T$e8Bd3Gf/EGFwjGlevYpV20$QSPjZ4iGq08tFifLPpfk/vFsjq7cmXq2oDo/2iGtD17:19815:0:99999:7:::
+```
 
 ### c)
 
 > Understand the shadow entry format, parse out the salt, the salted password hash, as well as the hash algorithm
 
+- Salt: `e8Bd3Gf/EGFwjGlevYpV20`
+- Salted hash: `QSPjZ4iGq08tFifLPpfk/vFsjq7cmXq2oDo/2iGtD17`
+- Hash algorithm: `yescrypt`
+
 ### d)
 
 > Utilize openssl passwd to recalculate the password hash, and compare with the one stored in /etc/shadow
 
+Openssl does not support `yescrypt`, so we have to use alternatives instead.
+
+```shell
+$ python3 -c 'import crypt; print(crypt.crypt("be9283a9afd5e0c3", "$y$j9T$e8Bd3Gf/EGFwjGlevYpV20$"))'
+$y$j9T$e8Bd3Gf/EGFwjGlevYpV20$QSPjZ4iGq08tFifLPpfk/vFsjq7cmXq2oDo/2iGtD17
+```
+
+We can see that the calculated hash is the same as the one stored in `/etc/shadow`.
+
 ### e)
 
 > Change the password for the user x, and redo d
+
+```shell
+$ sudo passwd d6f1a07c7502d98c # very_strong_password
+$ sudo cat /etc/shadow | grep d6f1a07c7502d98c
+d6f1a07c7502d98c:$y$j9T$vr1HF17Ht8EtpdCpUWrjW/$3KPKZHk0tcludhQPQLU9FzaMIX.mw2E2UcLCR/WAUMB:19815:0:99999:7:::
+$ python3 -c 'import crypt; print(crypt.crypt("very_strong_password", "$y$j9T$vr1HF17Ht8EtpdCpUWrjW/$"))'
+$y$j9T$vr1HF17Ht8EtpdCpUWrjW/$3KPKZHk0tcludhQPQLU9FzaMIX.mw2E2UcLCR/WAUMB
+```
+
+Again, we have verified the hash.
 
 ## 7
 
