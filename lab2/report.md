@@ -71,7 +71,7 @@ In order to ensure that an app cannot access another app's data.
 
 ### a)
 
->     Suppose this code is running as a setuid root program. Give an example of how this code can lead to unexpected behavior that could cause a security problem. Hint: try using symbolic links.
+> Suppose this code is running as a setuid root program. Give an example of how this code can lead to unexpected behavior that could cause a security problem. Hint: try using symbolic links.
 
 - If, when the program is sleeping, we execute: `ln -s /etc/passwd ./file.dat`
 - Then, `/etc/passwd` might be overwritten
