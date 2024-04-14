@@ -4,6 +4,8 @@
 
 > Assume that passwords are limited to the use of the 95 printable ASCII characters and that all passwords are 10 characters in length. Assume a password cracker with an encryption rate of 6.4 million encryptions per second. How long will it take to test exhaustively all possible passwords on a UNIX system?
 
+$t=\frac{95^{10}}{6.4 \times 10^6} \approx 1.48 \times 10^5s$
+
 ## 2
 
 > It was stated that the inclusion of the salt in the UNIX password scheme increases the difficulty of guessing by a factor of 4096. But the salt is stored in plaintext in the same entry as the corresponding ciphertext password. Therefore, those two characters are known to the attacker and need not be guessed.
@@ -12,9 +14,13 @@
 
 > Why is it asserted that salt increases security?
 
+因为它引入了随机性和唯一性，通过为每个密码加一个唯一的 Salt，即使两个用户选择了相同的密码，由于 Salt 的不同，它们的加密结果也会不同。这使得对密码的攻击变得更加困难，增加了破解的复杂性，即提高了安全性。
+
 ### b)
 
 > Wouldn’t it be possible to completely thwart all password crackers by dramatically increasing the salt size to, say, 24 or 48 bits?
+
+不能，增加 Salt 的位数可以提高密码的安全性，但并不能完全阻止所有密码破解器，破解者仍然可以暴力破解密码，只是需要更长的时间。
 
 ## 3
 
@@ -107,9 +113,14 @@ In order to ensure that an app cannot access another app's data.
 
 > A number of operating systems have two modes, kernel and user. What are the advantages and disadvantages of providing four modes instead of two?
 
+$\qquad$优点：可以更精细地控制和访问权限和资源，提高系统的资源利用率和性能；在不同模式下运行的进程对彼此的资源访问受限，可以降低未经授权的访问或干扰的风险，提高系统安全性；
+$\qquad$缺点：四种模式需要更详细地管理访问权限和资源，会增加系统的复杂性，使系统更难理解和维护；会引入额外的开销，包括上下文切换和管理模式之间的转换等，影响系统的性能。
+
 ### b)
 
 > Can you make a case for even more than four modes?
+
+$\qquad$例如 MULTICS OS 使用了七个操作系统层，虽然这一操作系统不是很成功，但它包含了很多现代操作系统的雏形，比如隐藏核心文件，只提供用户界面等，并且MULTICS直接孕育出了UNIX。如今的许多处理器都支持 hypervisor 模式，也就是所谓的第 0 层，可以直接访问硬件，它通常与虚拟化软件如 VMware 一起使用。此外，较新的 AMD-V 处理器还推出了一个 -1 级，使得客户操作系统可以在第 0 层本地运行，而不会与其他客户操作系统发生冲突。
 
 ## 6
 
@@ -179,5 +190,12 @@ Again, we have verified the hash.
 > - Backes, Michael, Sven Bugiel, Sebastian Gerling, and Philipp von Styp-Rekowsky. "Android security framework: Extensible multi-layered access control on android." In Proceedings of the 30th annual computer security applications conference, pp. 46-55. 2014. b)
 > - Barth, Adam, Collin Jackson, Charles Reis, and TGC Team. "The security architecture of the chromium browser." In Technical report. Stanford University, 2008.
 
+
+$\qquad$选择第二篇论文进行分析。这篇论文详细介绍了Chromium浏览器的安全架构，Chromium采用模块化的设计，将浏览器内核和渲染引擎分隔到不同的保护域中，通过沙盒技术降低渲染引擎的权限，从而减轻攻击的严重性，同时不影响现有网站的兼容性。</br>
+$\qquad$在引言部分，作者指出当前大多数Web浏览器仍采用1993年NCSA Mosaic引入的单体架构，这种设计易受安全威胁，如一旦浏览器出现漏洞，攻击者可能利用此漏洞控制整个浏览器。Chromium采用的模块化设计能有效隔离浏览器内核与网页渲染模块，即使后者被攻破，也难以直接影响整个系统。</br>
+$\qquad$其中 Chromium的两大核心模块是浏览器内核和渲染引擎。浏览器内核处理与操作系统的交互和管理用户数据，而渲染引擎则处理网页内容的解析和显示，但运行在受限的沙盒环境中，大大降低了被攻破的风险。详细介绍了各组件的职责分配和交互方式，如HTML解析、JavaScript执行等均在沙盒中进行，而文件读写、网络访问则由内核控制。</br>
+$\qquad$沙盒技术是Chromium安全架构的核心，用于限制渲染引擎的系统调用权限。详细描述了沙盒的实现机制，包括如何利用操作系统特性来隔离进程，以及沙盒的具体限制（如文件访问、进程创建等）。</br>
+$\qquad$文章最后，作者通过对比分析在Internet Explorer、Firefox和Safari中公开的漏洞，评估了Chromium架构对安全威胁的防护效果。结果显示，Chromium的设计能够显著降低由渲染引擎引起的安全问题的影响，展示了架构的有效性。</br>
+$\qquad$ Chromium 的安全架构虑了安全性、兼容性和性能之间的平衡，其模块化和沙盒技术的应用在当时具有创新性，对浏览器安全领域产生了深远影响。也有一定待完善的方面，比如模块化和沙盒技术的引入可能仍然会引起某些特定场景下的兼容性问题，特别是与一些依赖深层系统调用的复杂网页或Web应用；沙盒中的进程需要与浏览器内核进行额外的通信来完成任务，这可能增加系统调用的延迟，降低性能；由于安全隔离，插件和扩展的运行可能受到限制等等。
 
 
