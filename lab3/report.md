@@ -6,6 +6,8 @@
 >
 > We discussed in lecture how the DOM same-origin policy defines an origin as the triple (protocol, domain, port). Explain what would go wrong if the DOM same-origin policy were only defined by domain, and nothing else. Give a concrete example of an attack that a network attacker can do in this case, but cannot do when using the standard definition of the same-origin policy.
 
+$\qquad$如果只考虑域名，攻击者可以利用不同协议或端口来窃取数据或发起恶意操作。例如，攻击者可以在恶意站点上加载目标站点的内容，窃取认证信息或敏感数据，也可能借助不安全的协议（如HTTP）来诱导用户泄露机密信息，而这些攻击在严格的同源策略定义下无法实施。
+
 ## 2
 
 > Two new extensions to DNS have been recently ratified by the Internet standards community: DNS-over-HTTPS and DNS-over-TLS. The protocols work similarly to DNS except that DNS queries are sent over a standard encrypted HTTPS or TLS tunnel.
@@ -14,6 +16,19 @@
 > b) What is one DNS attack that DNS-over-HTTPS does not protect against?
 > c) Do DoH or DoT prevent DNS from being used as a DDoS amplifier? Why or why not?
 > d) Do DoH or DoT protect against DNS rebinding attacks? Why or why not?
+
+### a)
+DNS劫持攻击
+
+### b)
+DNS缓存投毒攻击
+
+### c)
+不能，因为攻击者仍可通过大量发送伪造的请求来放大流量
+
+### d)
+不能，因为攻击者可以借助合法请求来操纵响应
+
 
 ## 3
 
@@ -99,6 +114,27 @@ fetch("/userdata.json").then(r => r.json()).then(data => displayData(data));
 > d) Another approach is to choose the token as a fixed random string chosen by the server. That is, the same random string is used as the CSRF token in all HTTP responses from the server over a given time period. Does this prevent CSRF attacks? If so, explain why. If not, describe an attack.
 > e) Why is the Same-Origin Policy important for the cookie-plus-token defense?
 
+
+### a)
+$\qquad$在仅依赖于cookie进行会话管理的网站上，用户在登录后会获得一个会话cookie，该cookie用于标识用户的会话状态。当用户进行操作时，例如点击一个链接或提交一个表单，浏览器会自动发送包含会话cookie的HTTP请求到服务器，以验证用户的身份。
+
+$\qquad$ CSRF攻击利用了这种机制，攻击者可以诱使受害者在已登录的网站上执行恶意操作，而无需知道受害者的凭证。攻击者可以通过构造一个恶意网页或电子邮件，其中包含一个指向目标网站的请求，诱使受害者点击该链接或打开该邮件。一旦受害者执行了这个操作，浏览器会自动发送包含会话cookie的请求到目标网站，从而使攻击成功。
+
+### b)
+$\qquad$攻击者无法伪造包含有效CSRF令牌的请求。由于服务器要求在HTTP请求中同时包含有效的HTTP cookie头和有效的CSRF令牌，攻击者无法伪造这两者同时存在的请求。即使攻击者成功伪造了包含会话cookie的请求，但由于缺少有效的CSRF令牌，服务器会拒绝这个请求。
+
+$\qquad$ CSRF令牌是与用户会话相关的，每个用户会话都有一个独一无二的CSRF令牌。这意味着即使攻击者能够获取到某个用户的CSRF令牌，但由于该令牌只对应特定用户的会话，攻击者无法将其用于对其他用户的攻击。通过在DOM中嵌入一个随机令牌并进行验证，服务器能够有效地防御CSRF攻击，因为攻击者无法窃取该令牌。
+
+### c)
+$\qquad$每次响应都生成一个新令牌可以防御CSRF攻击，因为攻击者无法预知下次请求的令牌。
+
+### d)
+$\qquad$不能有效地防止CSRF攻击。攻击者可以定期向目标网站发起请求并获取最新的CSRF令牌，由于CSRF令牌是固定的并且在一段时间内保持不变，攻击者可以利用这个固定的CSRF令牌来伪造用户操作，利用用户的会话来执行未经授权的操作，如转账、更改密码等。
+
+### e)
+$\qquad$通过实施同源策略，浏览器可以阻止恶意网站访问用户的Cookie和令牌，从而有效地防止CSRF攻击。通过同源策略，浏览器可以阻止恶意脚本访问不同源的资源，防止XSS攻击，保护用户的敏感信息安全。如此防止网站之间共享用户的敏感信息，从而增强用户的隐私保护。
+
+
 ## 5
 
 > Recall that content security policy (CSP) is an HTTP header sent by a web site to the browser that tells the browser what it should and should not do as it is processing the content. The purpose of this question is to explore a number of CSP directives. Please use the CSP [specification](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy) to look up the definition of the directives in the questions below.
@@ -166,4 +202,24 @@ fetch("/userdata.json").then(r => r.json()).then(data => displayData(data));
 >
 > b) In order to implement a DNS amplification attack, the attacker must trigger the creation of a sufficiently large volume of DNS response packets from the intermediary to exceed the capacity of the link to the target organization. Consider an attack where the DNS response packets are 500 bytes in size (ignoring framing overhead). How many of these packets per second must the attacker trigger to flood a target organization using a 0.5-Mbps link? A 2-Mbps link? Or a 10-Mbps link? If the DNS request packet to the intermediary is 60 bytes in size, how much bandwidth does the attacker consume to send the necessary rate of DNS request packets for each of these three cases?
 
+### a)
+计算维持攻击的最低速率:
+   - 每个连接请求在表中的最大存活时间 = 5次重试 * 30秒/次 = 150秒。
+   - 为保持表满，每秒需要填充的新连接请求 = 表容量 / 最大存活时间 = 256 / 150 ≈ 1.71个请求/秒。
 
+计算带宽消耗:
+   - 每个TCP SYN包的大小 = 40字节。
+   - 每秒发送的数据量 = 请求速率 * 每个请求的大小 = 1.71个请求/秒 * 40字节/请求 = 68.4字节/秒。
+   - 将字节转换为比特，带宽 = 68.4字节/秒 * 8 = 547.2比特/秒 = 0.5472 kbps。
+
+### b)
+计算DNS响应包的速率:
+   - 为淹没0.5 Mbps链接，每秒需要的DNS响应包 = 0.5 Mbps / (500字节 * 8比特/字节) ≈ 125包/秒。
+   - 为淹没2 Mbps链接，每秒需要的DNS响应包 = 2 Mbps / (500字节 * 8比特/字节) ≈ 500包/秒。
+   - 为淹没10 Mbps链接，每秒需要的DNS响应包 = 10 Mbps / (500字节 * 8比特/字节) ≈ 2500包/秒。
+
+计算攻击者发送DNS请求包的带宽消耗:
+   - DNS请求包的大小 = 60字节。
+   - 为淹没0.5 Mbps链接，带宽 = 125包/秒 * 60字节/包 * 8比特/字节 = 60000比特/秒 = 60 kbps。
+   - 为淹没2 Mbps链接，带宽 = 500包/秒 * 60字节/包 * 8比特/字节 = 240000比特/秒 = 240 kbps。
+   - 为淹没10 Mbps链接，带宽 = 2500包/秒 * 60字节/包 * 8比特/字节 = 1200000比特/秒 = 1200 kbps。
