@@ -4,6 +4,15 @@
 
 > Describe what a NOP sled is and how it is used in a buffer overflow attack.
 
+A NOP sled is a sequence of `NOP` (No Operation) instructions used in exploit development, particularly in buffer overflow attacks. The `NOP` instruction does nothing and simply moves the instruction pointer to the next instruction in the sequence.
+
+1. **Buffer Overflow Setup**: In a buffer overflow attack, an attacker attempts to overwrite the memory of an application by providing more input data than the buffer can handle.
+2. **Placing the NOP Sled**: The attacker fills part of the overflowed buffer with a large number of `NOP` instructions. This is the NOP sled.
+3. **Shellcode Placement**: Following the NOP sled, the attacker places the shellcode (malicious code) they want to execute.
+4. **Overwriting the Return Address**: The attacker overwrites the return address on the stack with an address pointing to the NOP sled.
+
+The purpose of the NOP sled is to **Increases Success Rate**. Since `NOP` instructions do nothing, the instruction pointer can *land* anywhere in the NOP sled and *slide down* to eventually reach and execute the shellcode.
+
 ## 2
 
 > Look into different shellcodes released in [Packet Storm](https://packetstormsecurity.com/files/tags/shellcode/), and summarize different operations an attacker may design shellcode to perform.
@@ -32,6 +41,16 @@
 >
 > a. Craft a simple buffer overflow exploit, and circumvent the password checking logic. Include in your submission necessary step-by-step screenshots or descriptions to demonstrate how you carry out the attack.
 > b. Describe how to fix this buffer overflow issue.
+
+### a
+
+![](attachments/Pasted%20image%2020240522145003.png)
+
+### b
+
+Fix: replace `gets(str2);` with `fgets(str2, 9, stdin);`.
+
+![](attachments/Pasted%20image%2020240522145300.png)
 
 ## 4
 
@@ -65,12 +84,90 @@
 > memcpy(buf, hdr->ndata, nlen);
 > buf[nlen] = ':';
 > vlen = hdr->vlen;
-> if (8192 - (nlen+1) <= vlen ){ /* DANGER */
+> if (8192 - (nlen+1) <= vlen){ /* DANGER */
 >     vlen = 8192 - (nlen+1);
 > }
 > memcpy(&buf[nlen+1], hdr->vdata, vlen);
 > buf[nlen + vlen + 1] = 0;
 > ```
+
+If we assign `hdr->nlen = 8192` and `hdr->vlen=8192`, we can make this code crash. When the program executes the check `8192 - (nlen+1) <= vlen`, since `nlen = 8192`, `8192 - (nlen+1)` would give us `-1`. But `vlen` is of type `uint32_t`, so the left value would underflow to $2^{32}-1$, which is effectively greater than our `vlen`, allowing us to bypass the check. Thus, the buffer would overflow.
+
+Example code:
+
+```c
+#include <stdint.h>
+#include <string.h>
+#include <stdio.h>
+
+struct Header {
+    uint32_t nlen;
+    uint32_t vlen;
+    char ndata[8192];
+    char vdata[8192];
+};
+
+void vulnerable(struct Header *hdr) {
+    uint32_t nlen, vlen;
+    char buf[8264];
+    nlen = 8192;
+    if (hdr->nlen <= 8192) {
+        nlen = hdr->nlen;
+    }
+    memcpy(buf, hdr->ndata, nlen);
+    buf[nlen] = ':';
+    vlen = hdr->vlen;
+    if (8192 - (nlen + 1) <= vlen) { /* DANGER */
+        vlen = 8192 - (nlen + 1);
+    }
+    memcpy(&buf[nlen + 1], hdr->vdata, vlen);
+    buf[nlen + vlen + 1] = 0;
+    printf("%s\n", buf);
+}
+
+void normal() {
+    struct Header h;
+    h.nlen = 8;
+    h.vlen = 8;
+    h.ndata[0] = 'A';
+    h.ndata[1] = 'B';
+    h.ndata[2] = 'C';
+    h.ndata[3] = 'D';
+    h.ndata[4] = 'E';
+    h.ndata[5] = 'F';
+    h.ndata[6] = 'G';
+    h.ndata[7] = 'H';
+    h.vdata[0] = 'I';
+    h.vdata[1] = 'J';
+    h.vdata[2] = 'K';
+    h.vdata[3] = 'L';
+    h.vdata[4] = 'M';
+    h.vdata[5] = 'N';
+    h.vdata[6] = 'O';
+    h.vdata[7] = 'P';
+    vulnerable(&h);
+}
+
+void attack() {
+    struct Header h;
+    h.nlen = 8192;
+    h.vlen = 8192;
+    memset(h.ndata, 'A', 8192);
+    memset(h.vdata, 'B', 8192);
+    vulnerable(&h);
+}
+
+int main() {
+    puts("normal():");
+    normal();
+    puts("attack():");
+    attack();
+    puts("Attack failed!");
+    return 0;
+}
+```
+
+![](attachments/Pasted%20image%2020240522154149.png)
 
 ## 6
 
