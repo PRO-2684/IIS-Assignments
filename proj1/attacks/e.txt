@@ -1,0 +1,1 @@
+1'; Delete From Users Where username = 'users' or username = '1'; -- 
