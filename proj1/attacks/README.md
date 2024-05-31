@@ -75,8 +75,10 @@ document.cookie = "session=" + payload;
 After executing the code and performing a $\$1$ transaction, the balance of our account shall be $\$1000000$.
 
 ### e
-
-
+```sql
+1'; Delete From Users Where username = 'users' or username = '1'; -- 
+```
+The actual user name of the malicious user name is "1"，then we use "Delete" sentences to delete account "user3" and "1" from data base.
 
 ### f
 
