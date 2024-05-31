@@ -201,15 +201,17 @@ int main() {
 > - Kocher, Paul, Jann Horn, Anders Fogh, Daniel Genkin, Daniel Gruss, Werner Haas, Mike Hamburg et al. "Spectre attacks: Exploiting speculative execution." Communications of the ACM 63, no. 7 (2020): 93-101.
 > - Garfinkel, Tal, Ben Pfaff, and Mendel Rosenblum. "Ostia: A Delegating Architecture for Secure System Call Interposition." In NDSS. 2004.
 
-$\qquad$选择 Kocher，Paul 等人撰写的《Spectre Attacks: Exploiting Speculative Execution》一文。本文深入探讨了现代处理器中存在的重大漏洞，这些漏洞利用了speculative execution 这一在大多数高速处理器中常见的性能优化技术。作者详细说明了攻击者如何诱导处理器执行本不应该执行的指令，从而通过侧信道泄露机密信息，首次展示了绕过传统安全机制的实际攻击，对包括Intel、AMD和ARM在内的多家厂商的处理器都产生了影响​​。
+选择 Kocher，Paul 等人撰写的《Spectre Attacks: Exploiting Speculative Execution》一文。本文深入探讨了现代处理器中存在的重大漏洞，这些漏洞利用了 speculative execution 这一在大多数高速处理器中常见的性能优化技术。作者详细说明了攻击者如何诱导处理器执行本不应该执行的指令，从而通过侧信道泄露机密信息，首次展示了绕过传统安全机制的实际攻击，对包括 Intel、AMD 和 ARM 在内的多家厂商的处理器都产生了影响​​。
 
-advantages：
+Advantages:
+
 1. 论文提供了对投机执行机制及其可能被利用的详细分析，包括对分支预测和乱序执行的描述，使得不同背景的读者都能理解这些复杂概念。
-2. 通过展示Spectre漏洞不仅限于单一厂商的处理器，论文强调了这些漏洞对整个行业的广泛影响，这对于业界具有重要意义。
-3. 作者展示了现实世界中的攻击，并提供了概念验证实现。这种实用性的方法强调了处理这些漏洞的紧迫性，有助于理解Spectre攻击的实际风险。
+2. 通过展示 Spectre 漏洞不仅限于单一厂商的处理器，论文强调了这些漏洞对整个行业的广泛影响，这对于业界具有重要意义。
+3. 作者展示了现实世界中的攻击，并提供了概念验证实现。这种实用性的方法强调了处理这些漏洞的紧迫性，有助于理解 Spectre 攻击的实际风险。
 4. 论文不仅识别出漏洞，还讨论了潜在的缓解措施，包括软件补丁和硬件更改，为开发综合性的安全解决方案提供了指导。
 
-weaknesses or limitations：
+Weaknesses or limitations:
+
 1. 虽然论文提出了几种缓解策略，但许多策略较为复杂，可能需要对现有硬件和软件进行重大更改，这对快速部署和采用构成障碍。
 2. 所建议的缓解措施通常伴随性能上的权衡。例如，禁用投机执行或实施更严格的检查可能会降低处理器性能，这对高性能计算环境是一个重要的考虑因素。
 3. 尽管论文在分析上很彻底，但主要侧重于高层概念和实际演示，缺乏详细的低层次技术细节，这对于那些希望开发和实施精确对策的研究人员和专业人士来说是不利的。
